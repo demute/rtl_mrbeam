@@ -31,6 +31,15 @@
 #include <getopt.h>
 
 #include "sdr.h"
+#include "rtl_mrbeam.h"
+
+static r_cfg_t g_cfg;
+
+// TODO: SIGINFO is not in POSIX...
+#ifndef SIGINFO
+#define SIGINFO 29
+#endif
+
 
 static void sdr_callback(unsigned char *iq_buf, uint32_t len, void *ctx)
 {
@@ -61,13 +70,21 @@ static void sighandler(int signum)
     sdr_stop(g_cfg.dev);
 }
 
+void r_init_cfg(r_cfg_t *cfg)
+{
+    cfg->out_block_size  = DEFAULT_BUF_LENGTH;
+    cfg->samp_rate       = DEFAULT_SAMPLE_RATE;
+    cfg->conversion_mode = CONVERT_NATIVE;
+}
+
 int main(int argc, char **argv) {
     struct sigaction sigact;
     FILE *in_file;
     int r = 0;
     unsigned i;
-    struct dm_state *demod;
     r_cfg_t *cfg = &g_cfg;
+    cfg->dev_query = NULL;
+    cfg->verbosity = 0;
 
     r_init_cfg(cfg);
 
@@ -75,7 +92,8 @@ int main(int argc, char **argv) {
     setbuf(stderr, NULL);
 
     // Normal case, no test data, no in files
-    r = sdr_open(&cfg->dev, &demod->sample_size, cfg->dev_query, cfg->verbosity);
+    int sample_size = 1;
+    r = sdr_open(& cfg->dev, & sample_size, cfg->dev_query, cfg->verbosity);
     if (r < 0) {
         exit(1);
     }
@@ -113,7 +131,6 @@ int main(int argc, char **argv) {
 
         if (samp_rate != cfg->samp_rate) {
             r = sdr_set_sample_rate(cfg->dev, cfg->samp_rate, 1); // always verbose
-            update_protocols(cfg);
             samp_rate = cfg->samp_rate;
         }
 
@@ -129,8 +146,6 @@ int main(int argc, char **argv) {
         cfg->do_exit_async = 0;
         cfg->frequency_index = (cfg->frequency_index + 1) % cfg->frequencies;
     }
-
-    r_free_cfg(cfg);
 
     return r >= 0 ? r : -r;
 }

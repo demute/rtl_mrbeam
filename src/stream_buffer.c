@@ -80,7 +80,7 @@ int stream_buffer_get (StreamBuffer* bs, void* _buf, uint* len)
 
 int stream_buffer_counter_to_index (StreamBuffer* bs, ulong counter)
 {
-    int len = MIN (bs->counter, bs->len);
+    ulong len = MIN (bs->counter, bs->len);
     if (counter > bs->counter || (bs->counter - counter) >= len)
         return -1;
 
