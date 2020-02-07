@@ -1,0 +1,15 @@
+#ifndef _RTL_MRBEAM_H_
+#define _RTL_MRBEAM_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define rtl_mrbeam_VERSION_MAJOR @rtl_mrbeam_VERSION_MAJOR@
+#define rtl_mrbeam_VERSION_MINOR @rtl_mrbeam_VERSION_MINOR@
+
+#ifdef __cplusplus
+} /* end extern C */
+#endif
+
+#endif /* _RTL_MRBEAM_H_ */
