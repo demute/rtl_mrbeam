@@ -8,6 +8,7 @@ add_library(r_mrbeam STATIC
     common.c
     compat_time.c
     optparse.c
+    parser.c
     r_util.c
     sdr.c
     stream_buffer.c
