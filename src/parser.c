@@ -193,6 +193,7 @@ void sdr_callback(unsigned char *iq_buf, uint32_t len, void *ctx)
     {
         cfg->sampleCounter++;
         float_type iqIn[2] = { rtlLookup[iq_buf[i]], rtlLookup[iq_buf[i+1]] };
+        //fprintf (stderr, "%+f %+f\n", iqIn[0], iqIn[1]);
         float_type iqMixed[2] = {0};
         float_type iqFiltered[2] = {0};
 
@@ -220,7 +221,7 @@ void sdr_callback(unsigned char *iq_buf, uint32_t len, void *ctx)
 
             cfg->channelStates[channel].lastSample = cfg->sampleCounter;
             cfg->channelStates[channel].count++;
-            print_debug ("channel:%d count:%d", channel, cfg->channelStates[channel].count);
+            //print_debug ("channel:%d count:%d", channel, cfg->channelStates[channel].count);
 
             if (cfg->channelStates[channel].count > 300)
             {

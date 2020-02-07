@@ -76,9 +76,11 @@ int main(int argc, char **argv) {
 
     cfg->out_block_size  = DEFAULT_BUF_LENGTH;
     cfg->samp_rate       = 948000;
+    cfg->gain_str        = "13";
     cfg->conversion_mode = CONVERT_NATIVE;
     cfg->dev_query = NULL;
     cfg->verbosity = 0;
+    cfg->center_frequency = DEFAULT_FREQUENCY;
 
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
@@ -103,6 +105,7 @@ int main(int argc, char **argv) {
     r = sdr_set_sample_rate(cfg->dev, cfg->samp_rate, 1); // always verbose
     r = sdr_apply_settings(cfg->dev, cfg->settings_str, 1); // always verbose for soapy
     r = sdr_set_tuner_gain(cfg->dev, cfg->gain_str, 1); // always verbose
+    r = sdr_set_center_freq(cfg->dev, cfg->center_frequency, 1); // always verbose
 
     if (cfg->ppm_error)
         r = sdr_set_freq_correction(cfg->dev, cfg->ppm_error, 1); // always verbose
@@ -118,13 +121,13 @@ int main(int argc, char **argv) {
         time(&cfg->hop_start_time);
 
         /* Set the cfg->frequency */
-        cfg->center_frequency = cfg->frequency[cfg->frequency_index];
-        r = sdr_set_center_freq(cfg->dev, cfg->center_frequency, 1); // always verbose
+        //cfg->center_frequency = cfg->frequency[cfg->frequency_index];
+        //r = sdr_set_center_freq(cfg->dev, cfg->center_frequency, 1); // always verbose
 
-        if (samp_rate != cfg->samp_rate) {
-            r = sdr_set_sample_rate(cfg->dev, cfg->samp_rate, 1); // always verbose
-            samp_rate = cfg->samp_rate;
-        }
+        //if (samp_rate != cfg->samp_rate) {
+        //    r = sdr_set_sample_rate(cfg->dev, cfg->samp_rate, 1); // always verbose
+        //    samp_rate = cfg->samp_rate;
+        //}
 
         signal(SIGALRM, sighandler);
         alarm(3); // require callback to run every 3 second, abort otherwise
@@ -136,7 +139,7 @@ int main(int argc, char **argv) {
         }
         alarm(0); // cancel the watchdog timer
         cfg->do_exit_async = 0;
-        cfg->frequency_index = (cfg->frequency_index + 1) % cfg->frequencies;
+        //cfg->frequency_index = (cfg->frequency_index + 1) % cfg->frequencies;
     }
 
     return r >= 0 ? r : -r;
