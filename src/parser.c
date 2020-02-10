@@ -229,7 +229,7 @@ void sdr_callback(unsigned char *iq_buf, uint32_t len, void *ctx)
                if (tsp - cfg->channelStates[channel].eventTsp > 3)
                {
                    cfg->channelStates[channel].eventTsp = tsp;
-                   print_debug ("%f channel %d triggered!\n", get_time (), channel);
+                   fprintf (stderr, "%f channel %d triggered\n", get_time (), channel);
                    printf ("%d\n", channel);
                    fflush (stdout);
                }
