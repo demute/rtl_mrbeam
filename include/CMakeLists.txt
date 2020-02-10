@@ -2,6 +2,6 @@
 # Install public header files
 ########################################################################
 install(FILES
-    mrbeam.h
+    rtl_mrbeam.h
     DESTINATION include
 )
