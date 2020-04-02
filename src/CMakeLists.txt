@@ -12,6 +12,8 @@ add_library(r_mrbeam STATIC
     r_util.c
     sdr.c
     stream_buffer.c
+    term_ctl.c
+    confparse.c
 )
 
 if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")

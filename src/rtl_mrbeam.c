@@ -33,6 +33,9 @@
 #include "sdr.h"
 #include "rtl_mrbeam.h"
 #include "parser.h"
+#include "term_ctl.h"
+#include "confparse.h"
+#include "optparse.h"
 
 static r_cfg_t g_cfg;
 
@@ -65,6 +68,135 @@ static void sighandler(int signum)
     sdr_stop(g_cfg.dev);
 }
 
+static int hasopt(int test, int argc, char *argv[], char const *optstring)
+{
+    int opt;
+
+    optind = 1; // reset getopt
+    while ((opt = getopt(argc, argv, optstring)) != -1) {
+        if (opt == test || optopt == test)
+            return opt;
+    }
+    return 0;
+}
+
+static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg);
+
+static void usage(int exit_code)
+{
+    term_help_printf(
+            "\nUsage:\n"
+            "\t\t= General options =\n"
+            "  [-V] Output the version string and exit\n"
+            "  [-v] Increase verbosity (can be used multiple times).\n"
+            "       -v : verbose, -vv : verbose decoders, -vvv : debug decoders, -vvvv : trace decoding).\n"
+            "  [-d <RTL-SDR USB device index> | :<RTL-SDR USB device serial> | <SoapySDR device query> | rtl_tcp | help]\n"
+            "  [-g <gain> | help] (default: auto)\n"
+            "  [-h] Output this usage help and exit\n"
+            "       Use -d, -g, -R, -X, -F, -M, -r, -w, or -W without argument for more help\n\n");
+    exit(exit_code);
+}
+
+#define OPTSTRING "hVv:r:w:W:d:g:s"
+
+// these should match the short options exactly
+static struct conf_keywords const conf_keywords[] = {
+        {"help", 'h'},
+        {"verbose", 'v'},
+        {"version", 'V'},
+        {"device", 'd'},
+        {"gain", 'g'},
+        {"read_file", 'r'},
+        {"write_file", 'w'},
+        {"overwrite_file", 'W'},
+        {NULL, 0}
+};
+
+static void parse_conf_args(r_cfg_t *cfg, int argc, char *argv[])
+{
+    int opt;
+
+    optind = 1; // reset getopt
+    while ((opt = getopt(argc, argv, OPTSTRING)) != -1) {
+        if (opt == '?')
+            opt = optopt; // allow missing arguments
+        parse_conf_option(cfg, opt, optarg);
+    }
+}
+
+static void help_device(void)
+{
+    term_help_printf(
+            "\t\t= Input device selection =\n"
+#ifdef RTLSDR
+            "\tRTL-SDR device driver is available.\n"
+#else
+            "\tRTL-SDR device driver is not available.\n"
+#endif
+            "  [-d <RTL-SDR USB device index>] (default: 0)\n"
+            "  [-d :<RTL-SDR USB device serial (can be set with rtl_eeprom -s)>]\n"
+            "\tTo set gain for RTL-SDR use -g <gain> to set an overall gain in dB.\n"
+#ifdef SOAPYSDR
+            "\tSoapySDR device driver is available.\n"
+#else
+            "\tSoapySDR device driver is not available.\n"
+#endif
+            "  [-d \"\"] Open default SoapySDR device\n"
+            "  [-d driver=rtlsdr] Open e.g. specific SoapySDR device\n"
+            "\tTo set gain for SoapySDR use -g ELEM=val,ELEM=val,... e.g. -g LNA=20,TIA=8,PGA=2 (for LimeSDR).\n"
+            "  [-d rtl_tcp[:[//]host[:port]] (default: localhost:1234)\n"
+            "\tSpecify host/port to connect to with e.g. -d rtl_tcp:127.0.0.1:1234\n");
+    exit(0);
+}
+
+static void help_gain(void)
+{
+    term_help_printf(
+            "\t\t= Gain option =\n"
+            "  [-g <gain>] (default: auto)\n"
+            "\tFor RTL-SDR: gain in dB (\"0\" is auto).\n"
+            "\tFor SoapySDR: gain in dB for automatic distribution (\"\" is auto), or string of gain elements.\n"
+            "\tE.g. \"LNA=20,TIA=8,PGA=2\" for LimeSDR.\n");
+    exit(0);
+}
+
+static void parse_conf_option(r_cfg_t *cfg, int opt, char *arg)
+{
+    int n;
+
+    if (arg && (!strcmp(arg, "help") || !strcmp(arg, "?"))) {
+        arg = NULL; // remove the arg if it's a request for the usage help
+    }
+
+    switch (opt) {
+    case 'h':
+        usage(0);
+        break;
+    case 'v':
+        if (!arg)
+            cfg->verbosity++;
+        else
+            cfg->verbosity = atobv(arg, 1);
+        break;
+    case 'd':
+        if (!arg)
+            help_device();
+
+        cfg->dev_query = arg;
+        break;
+    case 'g':
+        if (!arg)
+            help_gain();
+
+        cfg->gain_str = arg;
+        break;
+    default:
+        usage(1);
+        break;
+    }
+}
+
+
 int main(int argc, char **argv) {
     struct sigaction sigact;
     FILE *in_file;
@@ -82,8 +214,12 @@ int main(int argc, char **argv) {
     cfg->verbosity = 0;
     cfg->center_frequency = DEFAULT_FREQUENCY;
 
+    parse_conf_args(cfg, argc, argv);
+
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
+
+    fprintf (stderr, "dvb rtl gain: %s\n", cfg->gain_str);
 
     // Normal case, no test data, no in files
     int sample_size = 1;
