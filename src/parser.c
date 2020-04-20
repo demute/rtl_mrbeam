@@ -223,7 +223,7 @@ void sdr_callback(unsigned char *iq_buf, uint32_t len, void *ctx)
             cfg->channelStates[channel].count++;
             //print_debug ("channel:%d count:%d", channel, cfg->channelStates[channel].count);
 
-            if (cfg->channelStates[channel].count > 300)
+            if (cfg->channelStates[channel].count > 175)
             {
                double tsp = get_time ();
                if (tsp - cfg->channelStates[channel].eventTsp > 3)
